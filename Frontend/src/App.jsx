@@ -1,37 +1,46 @@
-import React, { useState } from "react";
-import { uploadImage } from "./api";
+import { useState, useEffect } from "react";
+import Upload from "./components/Upload";
+import Camera from "./components/Camera";
+import Result from "./components/Result";
+import History from "./components/History";
+import "./App.css";
 
-export default function App() {
-  const [file, setFile] = useState(null);
+function App() {
   const [result, setResult] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
 
-  const handleUpload = async () => {
-    if (!file) return alert("Select image first");
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("history")) || [];
+    setHistory(saved);
+  }, []);
 
-    const data = await uploadImage(file);
-    setResult(data);
+  const updateHistory = (data) => {
+    const newHistory = [data, ...history];
+    setHistory(newHistory);
+    localStorage.setItem("history", JSON.stringify(newHistory));
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Food Freshness Analyzer</h1>
+    <div className="container">
+      <h1 className="title">🥗 Smart Food Quality Analyzer</h1>
 
-      <input
-        type="file"
-        onChange={(e) => setFile(e.target.files[0])}
-      />
+      <div className="buttonRow">
+        <Upload setResult={setResult} updateHistory={updateHistory} />
+        <Camera setResult={setResult} updateHistory={updateHistory} />
+      </div>
 
-      <br /><br />
+      {result && <Result data={result} />}
 
-      <button onClick={handleUpload}>Analyze</button>
+      {/* Green History Button */}
+      <div className="historyCard" onClick={() => setShowHistory(!showHistory)}>
+        📜 View History
+      </div>
 
-      {result && (
-        <div>
-          <h2>Result:</h2>
-          <p>Freshness: {result.freshness_class}</p>
-          <p>Confidence: {result.confidence}</p>
-        </div>
-      )}
+      {/* Show history only when clicked */}
+      {showHistory && <History history={history} />}
     </div>
   );
 }
+
+export default App;
